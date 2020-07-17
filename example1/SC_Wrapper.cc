@@ -1,12 +1,22 @@
-#include "riscv.h"
+//
+// This file is part of an OMNeT++/OMNEST simulation example.
+//
+// Copyright (C) 1992-2015 Andras Varga
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file
+// `license' for details on this and other legal matters.
+//
+
+#include <omnetpp.h>
+
+using namespace omnetpp;
 
 
-using namespace std;
-using namespace sc_core;
-//#define SC_INCLUDE_DYNAMIC_PROCESSES
 
 ////////////////////////******** RISC-V addition *********** //////////////////////////////////
+
 // Adding necessary libraries and header files to create riscv vp module
+
 #include <cstdlib>
 #include <ctime>
 #include <boost/io/ios_state.hpp>
@@ -24,61 +34,10 @@ using namespace sc_core;
 #include "include_vp/rv32/mem.h"
 #include "include_vp/memory.h"
 #include "include_vp/rv32/syscall.h"
-////////////////////////******** RISC-V addition *********** //////////////////////////////////
+
 using namespace rv32;
 
-
-
-/**
- * A dummy simulation model -- a counter which gets incremented
- * increasingly slower over time.
- */
-/*
-class Counter : public sc_module
-{
-  protected:
-    int counter;
-    int dt;
-
-  public:
-    SC_HAS_PROCESS(Counter);
-
-    Counter(sc_module_name name) : sc_module(name)
-    {
-        SC_THREAD(main);
-    }
-
-    void main()
-    {
-        counter = 0;
-        dt = 1;
-        while (true)
-        {
-            counter++;
-            cout << "inc at " << sc_time_stamp() << endl;
-            wait(dt, SC_MS);
-            dt++;
-        }
-    }
-
-    int getCounter()
-    {
-        return counter;
-    }
-};
-*/
-//---
-
-riscv::riscv(sc_module_name name_) : sc_module(name_)//, //model(nullptr)
-{
-    //model = new Counter("ctr");
-    SC_THREAD(main);
-}
-
-void riscv::main()
-
-{
-    struct Options {
+struct Options {
     typedef unsigned int addr_t;
 
     Options &check_and_post_process() {
@@ -101,13 +60,33 @@ void riscv::main()
     bool use_instr_dmi = false;
     bool use_data_dmi = false;
     bool trace_mode = false;
-    bool intercept_syscalls = false; //true
+    bool intercept_syscalls = true; //true
     bool quiet = false;
     bool use_E_base_isa = false;
     unsigned int debug_port = 5005;
 
     unsigned int tlm_global_quantum = 10;
 };
+
+////////////////////////****************** ******************* //////////////////////////////////
+
+
+/**
+ * An OMNeT++/OMNEST module that wraps a SystemC module
+ */
+class SC_Wrapper : public cSimpleModule
+{
+  public:
+    SC_Wrapper();
+};
+
+Define_Module(SC_Wrapper);
+
+void sc_create_model();
+
+SC_Wrapper::SC_Wrapper()
+{
+    EV << "Building the SystemC model...\n";
 
     Options opt ; //= parse_command_line_arguments(argc, argv);
 
@@ -178,33 +157,11 @@ void riscv::main()
         if (opt.quiet)
              sc_core::sc_report_handler::set_verbosity_level(sc_core::SC_NONE);
 
-       // sc_core::sc_start();
+        sc_core::sc_start();
         if (!opt.quiet) {
             core.show();
         }
 
-        //return 0;
+    sc_create_model();
 }
-/*
-void riscv::setup()
-{
 
-}
-*/
-void riscv::run()
-{
-    //sc_start(1000, SC_MS);
-    sc_core::wait(50, SC_MS);
-    cout << "simulation running" << endl;
-   // cout << "simulation running" << ((Counter *)model)->getCounter() << endl;
-    //sc_start(100, SC_MS);
-    //sc_core::wait(50, SC_MS);
-    //cout << "counter = " << ((Counter *)model)->getCounter() << endl;
-}
-/*
-void Tester::wrapup()
-{
-    //sc_start(1, SC_MS);
-    sc_core::wait(1, SC_MS);
-}
-*/

@@ -210,7 +210,7 @@ class SC_Riscv : public cSimpleModule
 };
 
 Define_Module(SC_Riscv);
-
+/*
 int sc_main (int argc , char *argv[])
 {
     //SC_Riscv a;
@@ -218,5 +218,5 @@ int sc_main (int argc , char *argv[])
   sc_start();
 
   return 0;
-}
+}*/
 

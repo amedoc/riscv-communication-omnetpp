@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for systemc-riscv-omnetpp
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -L/home/ahmed/Desktop/Work_Productive_4.0/riscv_vp_source_code/libraries -lpthread -lboost_regex -lboost_iostreams -lsoftfloat -lgdb -lgdb-mc -lcore-common -lrv32
+#  opp_makemake -f --deep -L/home/ahmed/Desktop/Work_Productive_4.0/riscv_vp_source_code/libraries -lboost_program_options -lpthread -lboost_regex -lboost_iostreams -lsoftfloat -lgdb -lgdb-mc -lcore-common -lrv32
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ INCLUDE_PATH =
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)/home/ahmed/Desktop/Work_Productive_4.0/riscv_vp_source_code/libraries  -lpthread -lboost_regex -lboost_iostreams -lsoftfloat -lgdb -lgdb-mc -lcore-common -lrv32
+LIBS = $(LDFLAG_LIBPATH)/home/ahmed/Desktop/Work_Productive_4.0/riscv_vp_source_code/libraries  -lboost_program_options -lpthread -lboost_regex -lboost_iostreams -lsoftfloat -lgdb -lgdb-mc -lcore-common -lrv32
 
 # Output directory
 PROJECT_OUTPUT_DIR = out
@@ -31,6 +31,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
+    $O/example1/forkjoin.o \
+    $O/example1/SC_Wrapper.o \
     $O/example2/SC_Riscv.o \
     $O/example3/riscv.o \
     $O/example3/SC_riscv.o \
@@ -90,6 +92,9 @@ endif
 # Add SystemC support library
 
 LIBS += -loppsystemc$D
+CFLAGS+= -std=c++14
+CFLAGS+=-Wall
+CFLAGS+=-g3
 
 # <<<
 #------------------------------------------------------------------------------

@@ -25,3 +25,12 @@ class SC_riscv : public cSimpleModule
 };
 
 Define_Module(SC_riscv);
+
+/*void sc_create_model();
+
+SC_riscv::SC_riscv()
+{
+    EV << "Building the SystemC model...\n";
+
+    sc_create_model();
+}*/

@@ -15,7 +15,7 @@ class riscv : public sc_module
 
     void main();
 
-    void setup();
+   // void setup();
     void run();
    // void wrapup();
 };
