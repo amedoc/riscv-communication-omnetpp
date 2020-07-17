@@ -1,0 +1,100 @@
+NOTE:
+  SystemC modules may only be created in OMNeT++ module constructors or as data members, but not
+  in initialize() or later, because SystemC does not support dynamic module creation, and we call
+  sc_init in startRun()!
+  "SystemC does not support the dynamic creation or modification of the module hierarchy during simulation"
+  (Notes in section 4.1 Elaboration in Draft Standard SystemC Language Reference Manual v2.1, Apr 25 2005.)
+  (There is a function called sc_module_dynalloc(), but it's undocumented)
+
+1. systemc: in the project, libs need to be changed to /MTd (otherwise there'll be link errors with omnetpp libs)
+2. systemc models need to be compiled with the /vmg option on visual C++. Add a makefrag.vc with the following lines:
+      CFLAGS_DEBUG=$(CFLAGS_DEBUG) /vmg
+      CFLAGS_RELEASE=$(CFLAGS_RELEASE) /vmg
+   if you forget this, you'll get a compile-time warning:
+      warning C4407: cast between different pointer to member representations, compiler may generate incorrect code
+   and also a runtime error:
+      __non_rtti_object: Access violation - no RTTI data!
+3. in sc_main.cpp, comment out the main() function (it conflicts with omnet++'s main)
+4. in sc_simcontext.h, "private:" must be changed to "protected:"
+5. in sc_event.h, class sc_event_timed: add "friend class opp_sc_simcontext;"
+   and before "namespace sc_core {", add "class opp_sc_simcontext;"
+6. omnet++ module should create the systemc model in initialize (or ctor?); easiest way is to change sc_main to a factory method that returns sc_module
+7. in your simulation model, write an sc_build_model() method! can be written based on sc_main(). remove the sc_start() call from it though!
+
+8. BEWARE: if sc_main() contains local vars (modules, signals etc) that go out of scope by the time we want to simulate -- too bad!!! need to rewrite them to use "new"
+9. there's a warning on exiting the simulation:
+     "WATCH OUT!! In sc_process_table destructor. Threads and cthreads are not actually getting deleted here.
+     Some memory may leak. Look at the comments here in kernel/sc_simcontext.cpp for more details."
+   the comments there don't state what should be done to make this warning go away; seems like normally
+   sc_simcontext() destructor is never called, that's why this message is not printed in normal systemc programs
+
+NOTE:
+- could not build stuff with vc90 -- some linker errors (conflicting symbols of 2 msvc internal libraries)
+- Tkenv may crash if msg gets sent from SystemC code to a module, which (in the same event!) immediately processes and deletes it.
+  Workaround: turn off broadcast animation!
+  Proper solution: process SystemC events as normal OMNeT++ events (via cEvent::execute())
+
+todo:
+ - omnetpp needs:
+     - cMessage MUST subclass from an abstract cEvent class, which has:
+          virtual simtime_t getDeliveryTime() const = 0;   //may map to wrapped SystemC event!
+          virtual void execute() = 0; // may wrap to SystemC event processing!
+       and SystemC timed events must be returned from the scheduler as wrapped into such a cEvent!
+       Without this, mixed SystemC simulations CAN NEVER BE PROPERLY IMPLEMENTED!!! (there's always some anomaly when omnet++ temporarily runs out of events etc)
+     - more hooks (prebuild, preinit (got this one), postinit; prefinish, postfinish, predeletenetwork, postdeletenetwork
+       Without this, mixed SystemC simulations CAN NEVER BE PROPERLY IMPLEMENTED!!!
+     - we also need the guessNextSimulationTime() method to be delegated to the scheduler
+     - scheduler control: user-stopped (currently:NULL), no-event-now-but-go-on (this should be the NULL!)
+     - opp_msgc: property to turn off code generation (ie only generate descriptors) ==> to view SystemC object hierarchy
+     - possibility to add non-cObject objects to the tree (SystemC hierarchy)
+     - btw, a crunch() is needed after each OMNeT++ event (in case an sc_event.notify() was called);
+       for lack of a better option, I put it at the top of getNextEvent()
+     - cEnvir::idle() --> rename to stopRequested()?  also, scheduler should be able to return NULL (to mean "no OMNeT++ event for now, but time is X, please check simtime/cputime limit!)
+
+---------------------------------------
+IF THE SYSTEMC MODEL CONTAINS SC_START():
+
+The SystemC model needs to be refactored so that everything that is currently in sc_main() goes
+into a coroutine (SC_THREAD), all occurrences of sc_start() should be replaced with sc_core::wait(),
+and at the end of sc_main() one needs to stop the simulation (e.g. throw cTerminationException.)
+
+The idea is that instead of using sc_start() one can simply wait() until the given simulation time
+interval passes, because the sc simulation is already run by OMNeT++.
+
+See example3/.
+
+One rule to be observed is that sc modules can only be created in the constructor of OMNeT++ modules,
+because sc does not support dynamic module creation.
+
+To translate the above to code, you could write an sc module which "drives" the whole thing:
+
+class Driver : public sc_module
+{
+  protected:
+    Test *test;
+
+  public:
+    SC_HAS_PROCESS(Driver);
+
+    Driver(sc_module_name name_) : sc_module(name_) {
+        test = new Test_swc_unicast("test"); // or something
+        SC_THREAD(main);
+    }
+
+    void main() {
+        test->configure();
+        test->setup();
+        test->run();
+        test->teardown();
+        delete test;
+        throw new cTerminationException(eENDSIM);
+    }
+};
+
+
+
+And, all occurrences of sc_start() should be replaced with sc_core::wait().
+
+
+
+This Driver module would be put into an OMNeT++ module (e.g. like a member variable).

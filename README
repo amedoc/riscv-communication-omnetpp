@@ -1,0 +1,271 @@
+Running mixed SystemC-OMNEST simulations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contents:
+1. Overview
+2. Configuring OMNEST to work with SystemC
+3. Interaction between OMNEST and SystemC modules
+4. Compiling SystemC models with OMNEST
+5. Adopting existing SystemC models for OMNEST
+6. Notes about the SC_Scheduler scheduler class
+
+
+Overview
+--------
+OMNEST makes it possible to run simulations that mix SystemC and OMNEST
+models. SystemC is a system specification and simulation library
+from the Open SystemC Initiative, www.systemc.org.
+
+SystemC itself comes as a C++ library. SystemC models are C++ code, and as
+such, SystemC models can be linked into OMNEST simulations. Because both
+OMNEST modules and SystemC modules are C++ objects, they can communicate
+via C++ method calls. Timestamp-ordered execution of SystemC and OMNEST
+events is ensured by a custom OMNEST scheduler.
+
+Using the solution described here, SystemC and OMNEST modules will be part
+of the same program, and will execute in the same process. This usually
+results in orders of magnitude higher simulation speeds than distributed
+solutions like co-simulation or HLA, and also allows simpler and more fine-
+grained communication between modules.
+
+The provided example simulations demonstrate the use of the SystemC
+modules, and may serve as a starting point for the customer's new
+simulations.
+
+
+Configuring OMNEST to work with SystemC
+-----------------------------------------
+
+OMNEST has built-in support for running SystemC modules if you link your
+model with the 'oppsystemc' library. This library contains the necessary
+support code including a full SystemC 2.2 implementation modified slightly
+to work with the OMNEST scheduler. OMNEST also provides the header files
+required for Transaction Level Modeling. To build the OMNEST SystemC
+support library, first you must rebuild OMNEST by specifying 'SYSTEMC=yes'
+in your configure.user file (or configuser.vc if you are using MS Visual C++)
+
+  Using GCC
+  ---------
+
+1. To activate SystemC support in OMNEST, edit your 'configure.user' file 
+   and specify 'SYSTEMC=yes' in it, then do the usual configure and build 
+   process as usual.
+
+   $ ./configure
+   $ make
+
+   This will build the necessary 'oppsystemc' library.
+
+2. To activate SystemC support in your model, you must link with the generated
+   'oppsystemc' library by creating a 'makefrag' file in your model (in the
+   same directory where your Makefile is located) with the following content:
+
+   KERNEL_LIBS += -loppsystemc$D
+
+3. Finally, (re)create your makefile using the makefrag specified above. If
+   you are working in the IDE, the IDE will do it for you automatically,
+   otherwise just use:
+
+   $ opp_makemake --deep -f
+
+   You can build your model normally after this step.
+
+  Using MS Visual C++
+  -------------------
+
+1. To activate SystemC support in OMNEST, edit your 'configuser.vc' file 
+   and specify 'SYSTEMC=yes' in it, then rebuild OMNEST.
+
+   > nmake -f Makefile.vc
+
+2. Create a file called 'makefrag.vc' in your model directory.
+   It should contain:
+
+   KERNEL_LIBS = $(KERNEL_LIBS) oppsystemc$D.lib
+   CFLAGS_DEBUG=$(CFLAGS_DEBUG) /vmg
+   CFLAGS_RELEASE=$(CFLAGS_RELEASE) /vmg
+
+3. Finally, (re)create the makefile:
+
+   > opp_nmakemake --deep -f
+
+(Check this project as an example to see how it is done.)
+
+
+  Modifying your ini files
+  ------------------------
+
+The custom scheduler that guarantees that SystemC events get processed
+along with OMNEST events is implemented in the SC_Scheduler C++ class
+(src/systemc/SC_Scheduler.cc). It can be activated by putting the following
+line into omnetpp.ini:
+
+  scheduler-class = SC_Scheduler
+
+This is all you need to do to activate SystemC support for your model.
+
+
+Interaction between OMNEST and SystemC modules
+-----------------------------------------------
+SystemC and OMNEST modules can talk to each other during the simulation
+in several ways. It is recommended that you create a wrapper OMNEST module
+for each SystemC module that you want to appear in the OMNEST simulation as
+one unit.
+
+If a SystemC module knows the pointer of its wrapper cSimpleModule, the
+SystemC module can send a message via the wrapper module's gates, can
+access the wrapper module's parameters, and make use of other OMNEST
+facilities.
+
+The wrapper cSimpleModule can also interact with its SystemC module. It can
+call methods, read/write data members and so on. For example, if a method
+thread in the SystemC module is blocked on an event, the OMNEST module
+can notify() that event and allow the code to continue.
+
+
+Building the examples
+---------------------
+The provided simulation example can be built as any other simulation
+model.
+
+Additional compiler options are in the makefrag and makefrag.vc files,
+which you need to copy if you start a new OMNEST-SystemC project.
+
+
+Notes about using Microsoft Visual C++
+--------------------------------------
+
+1. All SystemC code that you want to use with OMNEST simulations has
+   to be compiled as multi-threaded code (i.e. with the /MT or /MTd option),
+   because OMNEST libraries have been compiled with the same options.
+   Mixing single-threaded and multi-threaded code in MSVC will result in
+   linker errors.
+
+2. All code must be compiled with /vmg; this option is required by the SystemC
+   library. The default OMNEST build setup doesn't contain this flag; for
+   the examples they are added via makefrag.vc.
+
+   If you forget to add /vmg, you'll get the following compile-time warning:
+
+      warning C4407: cast between different pointer to member representations,
+      compiler may generate incorrect code
+
+   And also a runtime error (std::exception):
+
+      __non_rtti_object: Access violation - no RTTI data!
+
+3. If the linker does not find SystemC.lib, maybe you only compiled the Debug
+   (or the Release) configuration of the SystemC library, and the OMNEST
+   makefiles are looking for the other one. Compile both variants of SystemC,
+   or use "make MODE=release" or "make MODE=debug" to switch between
+   OMNEST debug/release builds.
+
+
+Adopting existing SystemC models for OMNEST
+--------------------------------------------
+
+When you have an existing SystemC simulation model, as a first step you
+probably just want to get it working inside an OMNEST simulation.
+So you would want to create an OMNEST wrapper module for it, and
+ensure that the wrapper module builds the SystemC model.
+
+SystemC models are normally built and run in the sc_main() function,
+so the SystemC model building code can be derived from the contents
+of sc_main().
+
+The wrapper module would look like this:
+
+  void sc_create_model();
+
+  class MySystemCModel : public cSimpleModule {
+    public:
+      MySystemCModel() { sc_create_model(); }
+  };
+
+  Define_Module(MySystemCModel);
+
+Now, if your sc_main() looks like this:
+
+  int sc_main (int argc , char *argv[]) {
+    top top1("Top1");
+    sc_start();
+    return 0;
+  }
+
+Then it is easy to write the sc_create_model() from it:
+
+  void sc_create_model() {
+    new top("Top1");
+  }
+
+Note that we removed the sc_start() call (because the simulation will be executed
+by the OMNEST simulation kernel), and instantiated the model dynamically (i.e.
+using "new") -- otherwise it would go out of scope and get destructed when the
+sc_create_model() call returns.
+
+The models in the exampleX/ subdirectory demonstrate this approach.
+
+If the original sc_main() is long, and allocates simulation objects on the stack,
+you're out of luck -- at minimum, objects need to be changed to dynamic allocation;
+better, the whole thing should be wrapped into a "top" sc_module.
+
+  * * *
+
+If the above solution works, the next step is to make the wrapper module
+accessible from the SystemC module, and vice versa. The following code example
+shows one way of setting up the classes:
+
+  class top : public sc_module
+  {
+    public:
+      cSimpleModule *wrapper;
+      ...
+
+      top(sc_module_name name, cSimpleModule *wrapper_) :
+          sc_module(name),
+          wrapper(wrapper_),
+          ...
+      {
+        ...
+      }
+  };
+
+  class SC_SimplePerf : public cSimpleModule
+  {
+     protected:
+       top top_inst;
+
+     public:
+       SC_SimplePerf() : top_inst("top", this) {}
+
+       void handleMessage(cMessage *msg)
+       {
+         delete msg;
+         top_inst.prod_inst.kick(); // call some method in the SystemC model
+       }
+  };
+
+  Define_Module(SC_SimplePerf);
+
+See SC_SimplePerf.cc in the example2/ directory -- it is organized as the
+code above.
+
+
+Notes about the SC_Scheduler scheduler class
+--------------------------------------------
+
+Notes about the SC_Scheduler class:
+
+1. Currently only one run is supported, in both Cmdenv and Tkenv. Tkenv must
+   be exited and restarted for every simulation (so e.g. "rebuild network"
+   is not possible).
+
+2. When single-stepping in Tkenv, the simulation time display may behave
+   erratically. This is because it displays the next OMNEST event; SystemC
+   events are ignored by the time display.
+
+3. Tkenv may crash if a message gets sent from a SystemC event code to an
+   OMNEST module, which (in the same event!) immediately processes and
+   deletes it. Workaround: turn off broadcast animation in the Tkenv Simulation
+   Options dialog. In future releases, this issue will be solved when SystemC
+   events get processed as normal OMNEST events.

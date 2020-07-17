@@ -1,0 +1,22 @@
+Running mixed SystemC-OMNeT++ simulations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+OMNEST makes it possible to run simulations that mix SystemC and OMNEST
+models. SystemC is a system specification and simulation library
+from the Open SystemC Initiative, www.systemc.org.
+
+SystemC itself comes as a C++ library. SystemC models are C++ code, and as
+such, SystemC models can be linked into OMNEST simulations. Because both
+OMNEST modules and SystemC modules are C++ objects, they can communicate
+via C++ method calls. Ordered execution of SystemC and OMNEST events is
+ensured by a custom OMNEST scheduler.
+
+Using the solution described here, SystemC and OMNEST modules will be part
+of the same program, and will execute in the same process. This usually
+results in orders of magnitude higher simulation speeds than distributed
+solutions like co-simulation or HLA, and also allows simpler and more fine-
+grained communication between modules.
+
+We provide example simulations which demonstrate the use of the SystemC
+modules, and may serve as a starting point for the customer's new
+simulations.

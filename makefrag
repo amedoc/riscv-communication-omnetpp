@@ -1,0 +1,3 @@
+# Add SystemC support library
+
+LIBS += -loppsystemc$D
