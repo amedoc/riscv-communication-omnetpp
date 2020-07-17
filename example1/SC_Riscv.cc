@@ -16,7 +16,7 @@ using namespace omnetpp;
 ////////////////////////******** RISC-V addition *********** //////////////////////////////////
 
 // Adding necessary libraries and header files to create riscv vp module
-
+/*
 #include <cstdlib>
 #include <ctime>
 #include <boost/io/ios_state.hpp>
@@ -66,7 +66,7 @@ struct Options {
     unsigned int debug_port = 5005;
 
     unsigned int tlm_global_quantum = 10;
-};
+};*/
 
 ////////////////////////****************** ******************* //////////////////////////////////
 
@@ -74,20 +74,20 @@ struct Options {
 /**
  * An OMNeT++/OMNEST module that wraps a SystemC module
  */
-class SC_Wrapper : public cSimpleModule
+class SC_Riscv : public cSimpleModule
 {
   public:
-    SC_Wrapper();
+    SC_Riscv();
 };
 
-Define_Module(SC_Wrapper);
+Define_Module(SC_Riscv);
 
 void sc_create_model();
 
-SC_Wrapper::SC_Wrapper()
+SC_Riscv::SC_Riscv()
 {
     EV << "Building the SystemC model...\n";
-
+/*
     Options opt ; //= parse_command_line_arguments(argc, argv);
 
         std::srand(std::time(nullptr));  // use current time as seed for random generator
@@ -160,7 +160,7 @@ SC_Wrapper::SC_Wrapper()
         sc_core::sc_start();
         if (!opt.quiet) {
             core.show();
-        }
+        }*/
 
     sc_create_model();
 }

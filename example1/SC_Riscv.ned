@@ -15,7 +15,7 @@ package example1;
 //
 // Wraps the SystemC model
 //
-simple SC_Wrapper
+simple SC_Riscv
 {
     parameters:
         @display("i=block/cogwheel");

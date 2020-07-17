@@ -24,7 +24,7 @@ network Wrapper_Net
 {
     submodules:
 
-        sc_riscv_wrapper: SC_Wrapper {
+        sc_riscv_wrapper: SC_Riscv {
             @display("p=200,180");
         }
 
