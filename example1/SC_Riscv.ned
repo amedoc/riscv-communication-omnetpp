@@ -19,4 +19,6 @@ simple SC_Riscv
 {
     parameters:
         @display("i=block/cogwheel");
+    gates:
+        input in ;
 }
