@@ -13,6 +13,8 @@ package example1;
 
 
 
+
+
 //
 // This example shows the first step of creating a mixed SystemC-OMNeT++
 // simulation. The network contains two simulation models, the OMNeT++ Fifo
@@ -20,13 +22,17 @@ package example1;
 // under the same roof and with their simulation times synchronized, but
 // otherwise they are independent.
 //
-network Wrapper_Net
+network Riscv_net
 {
     submodules:
-
         sc_riscv_wrapper: SC_Riscv {
             @display("p=200,180");
         }
+       sender: source {
+          @display("p=75,96");
+      }
 
+    connections:
+       sender.out --> {  delay = 100ms; } --> sc_riscv_wrapper.in;
 
 }

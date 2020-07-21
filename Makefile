@@ -31,8 +31,9 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
-    $O/example1/forkjoin.o \
-    $O/example1/SC_Wrapper.o \
+    $O/example1/riscv.o \
+    $O/example1/SC_Riscv.o \
+    $O/example1/source.o \
     $O/example2/SC_Riscv.o \
     $O/example3/riscv.o \
     $O/example3/SC_riscv.o \

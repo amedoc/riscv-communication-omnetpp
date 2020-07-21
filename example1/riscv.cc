@@ -75,7 +75,7 @@ struct Options {
         return *this;
     }
 
-    std::string input_program = "/home/ahmed/Desktop/Work_Productive_4.0/riscv-vp/sw/hello_world/main";
+    std::string input_program = "/home/ahmed/Desktop/Work_Productive_4.0/riscv-vp/sw/sys-read-file/main";
 
     addr_t mem_size = 1024 * 1024 * 32;  // 32 MB ram, to place it before the CLINT and run the base examples (assume
                                          // memory start at zero) without modifications
@@ -110,12 +110,16 @@ public:
 
   top(sc_module_name name) : sc_module(name)
   {
-     SC_THREAD(main);
+     //SC_THREAD(main);
+      SC_THREAD(main);
   }
 
   void main()
   {
-/*
+      //sc_event e1;
+     // e1.notify(100, SC_NS);
+
+
       Options opt ; //= parse_command_line_arguments(argc, argv);
 
            std::srand(std::time(nullptr));  // use current time as seed for random generator
@@ -189,7 +193,7 @@ public:
            if (!opt.quiet) {
                core.show();
            }
-*/
+
   }
 
 
@@ -197,7 +201,7 @@ public:
 
 int sc_main (int argc , char *argv[])
 {
-  top top1("Top1");
+ /* top top1("Top1");
 
   Options opt ; //= parse_command_line_arguments(argc, argv);
 
@@ -271,9 +275,9 @@ int sc_main (int argc , char *argv[])
       //sc_core::sc_start();
       if (!opt.quiet) {
           core.show();
-      }
-  sc_start();
-
+      }*/
+    top top1("Top1");
+    sc_start();
   return 0;
 }
 
