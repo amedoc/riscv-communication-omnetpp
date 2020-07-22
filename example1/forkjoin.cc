@@ -46,7 +46,7 @@ using namespace sc_core;
 ////////////////////////******** RISC-V addition *********** //////////////////////////////////
 
 // Adding necessary libraries and header files to create riscv vp module
-
+/*
 #include <cstdlib>
 #include <ctime>
 #include <boost/io/ios_state.hpp>
@@ -151,7 +151,7 @@ Options parse_command_line_arguments(int argc, char *argv[]) {
         std::cerr << "Error parsing command line options: " << e.what() << std::endl;
         exit(-1);
     }
-}
+}*/
 ////////////////////////****************** ******************* //////////////////////////////////
 
 
@@ -176,11 +176,12 @@ public:
 };
 
 int sc_main (int argc , char *argv[])
-{
+{/*
             //Options opt ; //= parse_command_line_arguments(argc, argv); // working simulation
-            std::string program_path="/home/ahmed/Desktop/Work_Productive_4.0/riscv-vp/sw/hello_world/main";
-            //std::string program="/home/ahmed/Desktop/Work_Productive_4.0/riscv-vp/sw/hello_world/main";
-            std::strcpy(argv[1], program_path.c_str());
+            std::string program_path="/home/ahmed/Desktop/Work_Productive_4.0/riscv-vp/sw/sys-read-file/main";
+            std::string argument="555";
+            std::strcpy(argv[1], program_path.c_str()); // program name as argument
+            std::strcpy(argv[2], argument.c_str()); // the variable being read from CLI
             Options opt = parse_command_line_arguments(argc, argv);
 
 
@@ -254,7 +255,7 @@ int sc_main (int argc , char *argv[])
              // sc_core::sc_start();
               if (!opt.quiet) {
                   core.show();
-              }
+              }*/
 
   top top1("Top1");
   sc_start();
